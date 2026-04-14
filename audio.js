@@ -1,4 +1,4 @@
-const LOOP_START_SECONDS = 0.5;
+const LOOP_START_SECONDS = 0.75;
 const LOOP_END_SECONDS = 97;
 
 function initAudio() {
@@ -28,7 +28,7 @@ function initAudio() {
     const active = started && !audio.muted && !document.hidden;
     audioToggle.classList.toggle("is-active", active);
     audioToggle.setAttribute("aria-pressed", String(active));
-    audioToggle.textContent = "Música";
+    audioToggle.textContent = "M\u00fasica";
   }
 
   async function tryPlay(muteFirst = false) {
