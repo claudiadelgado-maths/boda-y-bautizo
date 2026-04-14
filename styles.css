@@ -453,6 +453,10 @@ h2 {
   object-fit: cover;
 }
 
+#story .media-card {
+  width: min(100%, 240px);
+}
+
 @keyframes media-card-float {
   0% {
     transform: translateY(0) scale(1);
