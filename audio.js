@@ -1,6 +1,3 @@
-const LOOP_START_SECONDS = 0.75;
-const LOOP_END_SECONDS = 97;
-
 function initAudio() {
   const audio = document.getElementById("backgroundAudio");
   const audioToggle = document.getElementById("audioToggle");
@@ -15,16 +12,6 @@ function initAudio() {
   let started = false;
   let resumeAfterVisibility = false;
 
-  function clampToLoop() {
-    if (audio.currentTime < LOOP_START_SECONDS) {
-      try {
-        audio.currentTime = LOOP_START_SECONDS;
-      } catch (error) {
-        // Algunos navegadores bloquean el seek hasta que el medio esta listo.
-      }
-    }
-  }
-
   function applyMute() {
     audio.muted = userMuted;
   }
@@ -37,7 +24,6 @@ function initAudio() {
   }
 
   async function playAudio() {
-    clampToLoop();
     applyMute();
 
     try {
@@ -55,19 +41,8 @@ function initAudio() {
     await playAudio();
   }
 
-  audio.addEventListener("loadedmetadata", clampToLoop);
-
   audio.addEventListener("play", updateButton);
   audio.addEventListener("pause", updateButton);
-
-  audio.addEventListener("timeupdate", () => {
-    if (audio.currentTime >= LOOP_END_SECONDS) {
-      audio.currentTime = LOOP_START_SECONDS;
-      if (!audio.paused) {
-        audio.play().catch(() => {});
-      }
-    }
-  });
 
   audio.addEventListener("error", () => {
     userMuted = true;
@@ -75,6 +50,8 @@ function initAudio() {
     applyMute();
     updateButton();
   });
+
+  audio.loop = true;
 
   audioToggle.addEventListener("click", async () => {
     if (!started) {
