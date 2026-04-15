@@ -1,6 +1,26 @@
 const SCENE_ORDER = ["cover", "story", "place", "time", "confirm"];
 const EVENT_DATE = new Date("2026-08-22T18:00:00+02:00");
-let clickCount = 0;
+
+function initIntroScreen(audioController) {
+  // La preportada solo aparece al entrar y abre la invitacion completa.
+  const body = document.body;
+  const introScreen = document.getElementById("introScreen");
+  const openInvitation = document.getElementById("openInvitation");
+
+  if (!introScreen || !openInvitation) {
+    return;
+  }
+
+  body.classList.add("intro-active");
+  introScreen.setAttribute("aria-hidden", "false");
+
+  openInvitation.addEventListener("click", async () => {
+    await audioController.start();
+    introScreen.classList.add("is-hidden");
+    introScreen.setAttribute("aria-hidden", "true");
+    body.classList.remove("intro-active");
+  });
+}
 
 function initMenu() {
   // Abre y cierra el menu overlay por encima de toda la app.
@@ -150,57 +170,11 @@ function initCountdown() {
   window.setInterval(renderCountdown, 1000);
 }
 
-function initAutoplayGuide() {
-  // Muestra la flecha una sola vez y la oculta con el primer gesto del usuario.
-  const audioHint = document.getElementById("audioHint");
-  const audioToggle = document.getElementById("audioToggle");
-  const appFrame = document.querySelector(".app-frame");
-
-  if (!audioHint || !audioToggle || !appFrame) {
-    return;
-  }
-
-  function positionAudioHint() {
-    const frameRect = appFrame.getBoundingClientRect();
-    const toggleRect = audioToggle.getBoundingClientRect();
-    const originX = toggleRect.left - frameRect.left + (toggleRect.width / 2) - 8;
-    const originY = toggleRect.top - frameRect.top + toggleRect.height + 22;
-
-    audioHint.style.setProperty("--hint-origin-x", `${originX}px`);
-    audioHint.style.setProperty("--hint-origin-y", `${originY}px`);
-  }
-
-  function hideAudioHint() {
-    audioHint.classList.add("is-hidden");
-  }
-
-  function handleFirstInteraction() {
-    if (clickCount !== 0) {
-      return;
-    }
-
-    clickCount = 1;
-    hideAudioHint();
-    window.removeEventListener("resize", positionAudioHint);
-    document.removeEventListener("pointerdown", handleFirstInteraction, true);
-    document.removeEventListener("touchstart", handleFirstInteraction, true);
-  }
-
-  positionAudioHint();
-
-  if (clickCount === 0) {
-    audioHint.classList.remove("is-hidden");
-    document.addEventListener("pointerdown", handleFirstInteraction, true);
-    document.addEventListener("touchstart", handleFirstInteraction, true);
-    window.addEventListener("resize", positionAudioHint);
-  }
-}
-
 document.addEventListener("DOMContentLoaded", () => {
+  const audioController = initAudio();
+  initIntroScreen(audioController);
   const setMenuState = initMenu();
   initScenes(setMenuState);
   initCoverRotation();
   initCountdown();
-  initAutoplayGuide();
-  initAudio();
 });

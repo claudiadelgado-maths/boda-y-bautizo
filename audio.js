@@ -5,10 +5,15 @@ function initAudio() {
   const audio = document.getElementById("backgroundAudio");
   const audioToggle = document.getElementById("audioToggle");
 
+  if (!audio || !audioToggle) {
+    return {
+      start: async () => {},
+    };
+  }
+
   let userMuted = false;
-  let hiddenMuted = false;
   let started = false;
-  let skipNextAudioToggleClick = false;
+  let resumeAfterVisibility = false;
 
   function clampToLoop() {
     if (audio.currentTime < LOOP_START_SECONDS) {
@@ -21,48 +26,39 @@ function initAudio() {
   }
 
   function applyMute() {
-    audio.muted = userMuted || hiddenMuted;
+    audio.muted = userMuted;
   }
 
   function updateButton() {
-    const active = started && !audio.muted && !document.hidden;
+    const active = started && !audio.paused && !audio.muted;
     audioToggle.classList.toggle("is-active", active);
     audioToggle.setAttribute("aria-pressed", String(active));
     audioToggle.textContent = "M\u00fasica";
   }
 
-  async function tryPlay(muteFirst = false) {
+  async function playAudio() {
     clampToLoop();
-
-    if (muteFirst && !started) {
-      audio.muted = true;
-    } else {
-      applyMute();
-    }
+    applyMute();
 
     try {
       await audio.play();
       started = true;
-
-      if (!userMuted && !hiddenMuted) {
-        audio.muted = false;
-      }
     } catch (error) {
-      // Bloqueado por el navegador: esperamos el primer gesto del usuario.
+      // Si falla, dejamos el boton listo para un nuevo intento explicito.
     }
 
     updateButton();
   }
 
+  async function start() {
+    userMuted = false;
+    await playAudio();
+  }
+
   audio.addEventListener("loadedmetadata", clampToLoop);
 
-  audio.addEventListener("canplay", () => {
-    if (!started) {
-      tryPlay(true);
-    }
-  });
-
   audio.addEventListener("play", updateButton);
+  audio.addEventListener("pause", updateButton);
 
   audio.addEventListener("timeupdate", () => {
     if (audio.currentTime >= LOOP_END_SECONDS) {
@@ -75,77 +71,62 @@ function initAudio() {
 
   audio.addEventListener("error", () => {
     userMuted = true;
-    audio.muted = true;
+    audio.pause();
+    applyMute();
     updateButton();
   });
 
   audioToggle.addEventListener("click", async () => {
-    if (skipNextAudioToggleClick) {
-      skipNextAudioToggleClick = false;
-      userMuted = false;
-      hiddenMuted = false;
-      applyMute();
-      await tryPlay();
-      return;
-    }
-
     if (!started) {
-      userMuted = false;
-      hiddenMuted = false;
-      applyMute();
-      await tryPlay();
+      await start();
       return;
     }
 
     userMuted = !userMuted;
     applyMute();
+    if (!userMuted && audio.paused) {
+      await playAudio();
+      return;
+    }
     updateButton();
   });
 
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
-      hiddenMuted = true;
-      applyMute();
-    } else {
-      hiddenMuted = false;
-      applyMute();
-      if (audio.paused && started && !userMuted) {
-        tryPlay();
+      if (started && !audio.paused) {
+        resumeAfterVisibility = !userMuted;
+        audio.pause();
       }
+    } else if (resumeAfterVisibility) {
+      resumeAfterVisibility = false;
+      playAudio();
+    } else {
+      resumeAfterVisibility = false;
     }
     updateButton();
   });
 
   window.addEventListener("pagehide", () => {
-    hiddenMuted = true;
-    applyMute();
+    if (started && !audio.paused) {
+      resumeAfterVisibility = !userMuted;
+      audio.pause();
+    }
     updateButton();
   });
 
   window.addEventListener("pageshow", () => {
-    hiddenMuted = false;
-    applyMute();
-    if (audio.paused && started && !userMuted) {
-      tryPlay();
+    if (resumeAfterVisibility) {
+      resumeAfterVisibility = false;
+      playAudio();
+    } else {
+      resumeAfterVisibility = false;
     }
     updateButton();
   });
 
-  function onFirstTouch(event) {
-    if (event.target.closest("#audioToggle")) {
-      skipNextAudioToggleClick = true;
-    }
+  updateButton();
 
-    if (!started) {
-      tryPlay();
-    }
-
-    document.removeEventListener("pointerdown", onFirstTouch);
-    document.removeEventListener("touchstart", onFirstTouch);
-  }
-
-  document.addEventListener("pointerdown", onFirstTouch, { passive: true });
-  document.addEventListener("touchstart", onFirstTouch, { passive: true });
-
-  tryPlay(true);
+  return {
+    start,
+  };
 }

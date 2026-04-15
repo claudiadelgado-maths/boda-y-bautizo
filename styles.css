@@ -29,6 +29,8 @@ body {
 
 body {
   min-width: 320px;
+  min-height: 100vh;
+  min-height: 100dvh;
   font-family: "Manrope", sans-serif;
   color: var(--text);
   background:
@@ -60,8 +62,9 @@ a {
 
 .app-shell {
   position: relative;
-  height: 100vh;
-  padding: 5%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: max(1rem, env(safe-area-inset-top)) 5% max(1rem, env(safe-area-inset-bottom));
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -93,7 +96,8 @@ a {
 .app-frame {
   position: relative;
   width: min(100%, 460px);
-  height: 100%;
+  min-height: calc(100vh - 2rem);
+  min-height: calc(100dvh - 2rem);
   border-radius: 38px;
   border: 1px solid rgba(255, 255, 255, 0.72);
   background:
@@ -102,6 +106,47 @@ a {
   box-shadow: 0 30px 80px rgba(92, 74, 54, 0.18);
   overflow: hidden;
   backdrop-filter: blur(18px);
+}
+
+.intro-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background:
+    linear-gradient(180deg, rgba(251, 247, 242, 0.98), rgba(247, 240, 231, 0.94)),
+    var(--bg-soft);
+  z-index: 130;
+  transition: opacity var(--transition), visibility var(--transition);
+}
+
+.intro-screen.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.intro-screen__content {
+  width: min(100%, 470px);
+  display: grid;
+  gap: 1.1rem;
+  text-align: center;
+}
+
+.intro-screen__title {
+  margin: 0;
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(2.2rem, 9vw, 3.5rem);
+  line-height: 1.02;
+  white-space: normal;
+}
+
+body.intro-active .site-header,
+body.intro-active .app-stage {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .site-header {
@@ -192,7 +237,7 @@ a {
 .menu-overlay {
   position: absolute;
   inset: 0;
-  padding: calc(1rem + var(--header-h) + 1rem) 1rem 1rem;
+  padding: calc(1rem + var(--header-h) + 1rem) 1rem max(1rem, calc(1rem + env(safe-area-inset-bottom)));
   background: rgba(243, 235, 225, 0.66);
   backdrop-filter: blur(18px);
   opacity: 0;
@@ -200,51 +245,6 @@ a {
   pointer-events: none;
   transition: opacity 220ms ease, visibility 220ms ease;
   z-index: 90;
-}
-
-.audio-hint {
-  position: absolute;
-  left: var(--hint-origin-x, 50%);
-  top: var(--hint-origin-y, 20%);
-  width: 72px;
-  height: 72px;
-  transform: translate(-50%, -50%);
-  color: #6f8564;
-  pointer-events: none;
-  z-index: 120;
-  opacity: 1;
-  visibility: visible;
-  transition: opacity 180ms ease, visibility 180ms ease;
-}
-
-.audio-hint.is-hidden {
-  opacity: 0;
-  visibility: hidden;
-}
-
-.audio-hint__arrow {
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 10px 18px rgba(82, 99, 76, 0.22));
-  transform-origin: center;
-  animation: audio-hint-flight 1.75s ease-in-out infinite;
-}
-
-@keyframes audio-hint-flight {
-  0% {
-    transform: translate(0, 8px) scale(0.92);
-    opacity: 0.6;
-  }
-
-  50% {
-    transform: translate(-6px, 0) scale(1.08);
-    opacity: 1;
-  }
-
-  100% {
-    transform: translate(0, 8px) scale(0.92);
-    opacity: 0.6;
-  }
 }
 
 .menu-overlay.is-open {
@@ -297,15 +297,15 @@ a {
 }
 
 .app-stage {
-  position: relative;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   z-index: 1;
 }
 
 .scene {
   position: absolute;
   inset: 0;
-  padding: calc(1rem + var(--header-h) + 1rem) 1rem 1rem;
+  padding: calc(1rem + var(--header-h) + 1rem) 1rem max(1rem, calc(1rem + env(safe-area-inset-bottom)));
   opacity: 0;
   pointer-events: none;
   transform: translateX(30px) scale(0.985);
@@ -333,6 +333,7 @@ a {
   gap: 1.1rem;
   text-align: center;
   overflow-y: auto;
+  padding-bottom: 0.35rem;
 }
 
 .scene__content--hero {
@@ -485,6 +486,18 @@ h2 {
   width: 100%;
 }
 
+.contact-list--plain {
+  width: min(100%, 470px);
+  justify-items: center;
+  gap: 0.45rem;
+}
+
+.contact-list--plain p {
+  margin: 0;
+  line-height: 1.65;
+  color: var(--text);
+}
+
 .map-card__copy h3 {
   margin: 0;
   font-family: "Cormorant Garamond", serif;
@@ -595,10 +608,6 @@ h2 {
   border: 1px solid var(--line);
 }
 
-.contact-card p a {
-  color: var(--accent-deep);
-}
-
 .back-toggle:hover,
 .audio-toggle:hover,
 .menu-toggle:hover,
@@ -621,6 +630,8 @@ h2 {
 
   .app-frame {
     width: min(100%, 960px);
+    min-height: calc(100vh - 4rem);
+    min-height: calc(100dvh - 4rem);
   }
 
   .site-header {
@@ -630,11 +641,11 @@ h2 {
   }
 
   .menu-overlay {
-    padding: calc(1.25rem + var(--header-h) + 1rem) 1.25rem 1.25rem;
+    padding: calc(1.25rem + var(--header-h) + 1rem) 1.25rem max(1.25rem, calc(1.25rem + env(safe-area-inset-bottom)));
   }
 
   .scene {
-    padding: calc(1.25rem + var(--header-h) + 1rem) 1.25rem 1.25rem;
+    padding: calc(1.25rem + var(--header-h) + 1rem) 1.25rem max(1.25rem, calc(1.25rem + env(safe-area-inset-bottom)));
   }
 
   .map-stack {
@@ -645,7 +656,7 @@ h2 {
     grid-column: 1 / -1;
   }
 
-  .contact-list {
+  .contact-list:not(.contact-list--plain) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
@@ -655,10 +666,6 @@ h2 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .audio-hint__arrow {
-    animation: none !important;
-  }
-
   *,
   *::before,
   *::after {
